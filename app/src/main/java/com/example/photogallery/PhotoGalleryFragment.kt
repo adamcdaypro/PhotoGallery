@@ -1,12 +1,15 @@
 package com.example.photogallery
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.photogallery.databinding.FragmentPhotoGalleryBinding
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
@@ -31,14 +34,23 @@ class PhotoGalleryFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         viewLifecycleOwner.lifecycleScope.launch {
-            val content = viewModel.getInterestingness()
-            Snackbar.make(view, content, Snackbar.LENGTH_SHORT).show()
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.photos.collect {
+                    Log.d(TAG, it.toString())
+                    Snackbar.make(view, it.toString(), Snackbar.LENGTH_INDEFINITE).show()
+                }
+            }
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
         _binding = null
+    }
+
+    companion object {
+
+        private const val TAG = "PhotoGalleryFragment"
     }
 
 }

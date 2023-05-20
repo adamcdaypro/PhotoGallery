@@ -1,7 +1,8 @@
 package com.example.photogallery.network
 
+import com.example.photogallery.model.FlickrResponse
 import retrofit2.Retrofit
-import retrofit2.converter.scalars.ScalarsConverterFactory
+import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.GET
 
 interface FlickrApi {
@@ -12,7 +13,7 @@ interface FlickrApi {
                 "&extras=url_s" +
                 "&format=json&nojsoncallback=1"
     )
-    suspend fun getInterestingness(): String
+    suspend fun getInterestingness(): FlickrResponse
 
     companion object {
 
@@ -22,7 +23,7 @@ interface FlickrApi {
         fun create(): FlickrApi {
             val retrofit = Retrofit.Builder()
                 .baseUrl(FLICKER_BASE_URL)
-                .addConverterFactory(ScalarsConverterFactory.create())
+                .addConverterFactory(MoshiConverterFactory.create())
                 .build()
 
             return retrofit.create(FlickrApi::class.java)
