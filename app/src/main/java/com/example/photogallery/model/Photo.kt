@@ -7,5 +7,5 @@ import com.squareup.moshi.JsonClass
 data class Photo(
     val id: String,
     val title: String,
-    @Json(name = "url_s") val urlSmall: String,
+    @Json(name = "url_s") val urlSmall: String
 )

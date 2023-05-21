@@ -1,8 +1,9 @@
-package com.example.photogallery
+package com.example.photogallery.ui
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.photogallery.PhotoRepository
 import com.example.photogallery.model.Photo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,12 +22,17 @@ class PhotoGalleryViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val photos = repository.getInterestingnessPhotos()
-                Log.d("test", photos.toString())
+                Log.d(TAG, photos.toString())
                 _photos.value = photos
             } catch (exception: Exception) {
-                Log.d("test", exception.localizedMessage ?: "Unknown exception")
+                Log.d(TAG, exception.localizedMessage ?: "Unknown exception")
             }
         }
+    }
+
+    companion object {
+
+        private const val TAG = "PhotoGalleryFragment"
     }
 
 }

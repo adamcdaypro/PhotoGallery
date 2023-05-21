@@ -20,14 +20,19 @@ interface FlickrApi {
         private const val FLICKER_API_KEY = "152a8a273ed1cb8988cef8f1e38583dc"
         private const val FLICKER_BASE_URL = "https://api.flickr.com/"
 
-        fun create(): FlickrApi {
-            val retrofit = Retrofit.Builder()
-                .baseUrl(FLICKER_BASE_URL)
-                .addConverterFactory(MoshiConverterFactory.create())
-                .build()
+        private var FLICKER_API: FlickrApi? = null
 
-            return retrofit.create(FlickrApi::class.java)
+        fun get(): FlickrApi {
+            if (FLICKER_API == null) synchronized(this) {
+                val retrofit = Retrofit.Builder()
+                    .baseUrl(FLICKER_BASE_URL)
+                    .addConverterFactory(MoshiConverterFactory.create())
+                    .build()
+
+                FLICKER_API = retrofit.create(FlickrApi::class.java)
+            }
+            return FLICKER_API!!
         }
-
     }
+
 }

@@ -1,7 +1,6 @@
 package com.example.photogallery
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,8 +9,10 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.GridLayoutManager
 import com.example.photogallery.databinding.FragmentPhotoGalleryBinding
-import com.google.android.material.snackbar.Snackbar
+import com.example.photogallery.ui.PhotoGalleryAdapter
+import com.example.photogallery.ui.PhotoGalleryViewModel
 import kotlinx.coroutines.launch
 
 class PhotoGalleryFragment : Fragment() {
@@ -23,8 +24,7 @@ class PhotoGalleryFragment : Fragment() {
     private val viewModel: PhotoGalleryViewModel by viewModels()
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         _binding = FragmentPhotoGalleryBinding.inflate(inflater, container, false)
         return binding.root
@@ -33,11 +33,12 @@ class PhotoGalleryFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        binding.photoGallery.layoutManager = GridLayoutManager(requireContext(), 3)
+
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.photos.collect {
-                    Log.d(TAG, it.toString())
-                    Snackbar.make(view, it.toString(), Snackbar.LENGTH_INDEFINITE).show()
+                    binding.photoGallery.adapter = PhotoGalleryAdapter(it)
                 }
             }
         }
@@ -46,11 +47,6 @@ class PhotoGalleryFragment : Fragment() {
     override fun onDestroy() {
         super.onDestroy()
         _binding = null
-    }
-
-    companion object {
-
-        private const val TAG = "PhotoGalleryFragment"
     }
 
 }
