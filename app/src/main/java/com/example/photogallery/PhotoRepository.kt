@@ -11,4 +11,9 @@ class PhotoRepository {
         val flickrResponse = flickrApi.getInterestingness()
         return flickrResponse.photos.photos
     }
+
+    suspend fun getPhotosBySearchText(text: String): List<Photo> {
+        val flickrResponse = flickrApi.getPhotosBySearchText(text)
+        return flickrResponse.photos.photos
+    }
 }
