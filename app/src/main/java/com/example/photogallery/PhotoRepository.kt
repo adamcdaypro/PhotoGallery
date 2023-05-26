@@ -5,7 +5,7 @@ import com.example.photogallery.network.FlickrApi
 
 class PhotoRepository {
 
-    private val flickrApi: FlickrApi = FlickrApi.get()
+    private val flickrApi: FlickrApi = FlickrApi.getInstance()
 
     suspend fun getInterestingnessPhotos(): List<Photo> {
         val flickrResponse = flickrApi.getInterestingness()

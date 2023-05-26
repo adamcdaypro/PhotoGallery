@@ -25,25 +25,22 @@ interface FlickrApi {
         private const val FLICKER_API_KEY = "152a8a273ed1cb8988cef8f1e38583dc"
         private const val FLICKER_BASE_URL = "https://api.flickr.com/"
 
-        private var FLICKER_API: FlickrApi? = null
+        private var INSTANCE: FlickrApi? = null
 
-        fun get(): FlickrApi {
-            Log.d(TAG, "FlickerApi instance requested")
-            if (FLICKER_API == null) synchronized(this) {
-                val okHttpClient = OkHttpClient.Builder()
-                    .addInterceptor(FlickerInterceptor())
+        fun getInstance(): FlickrApi {
+            Log.d(TAG, "$TAG instance requested")
+            if (INSTANCE == null) synchronized(this) {
+                val okHttpClient =
+                    OkHttpClient.Builder().addInterceptor(FlickerInterceptor()).build()
+
+                val retrofit = Retrofit.Builder().baseUrl(FLICKER_BASE_URL)
+                    .addConverterFactory(MoshiConverterFactory.create()).client(okHttpClient)
                     .build()
 
-                val retrofit = Retrofit.Builder()
-                    .baseUrl(FLICKER_BASE_URL)
-                    .addConverterFactory(MoshiConverterFactory.create())
-                    .client(okHttpClient)
-                    .build()
-
-                FLICKER_API = retrofit.create(FlickrApi::class.java)
-                Log.d(TAG, "FlickerApi instance created")
+                INSTANCE = retrofit.create(FlickrApi::class.java)
+                Log.d(TAG, "$TAG instance created")
             }
-            return FLICKER_API!!
+            return INSTANCE!!
         }
     }
 
@@ -51,13 +48,14 @@ interface FlickrApi {
 
         override fun intercept(chain: Interceptor.Chain): Response {
             val originalRequest = chain.request()
-            val url: HttpUrl = originalRequest.url.newBuilder()
-                .addQueryParameter("api_key", FLICKER_API_KEY)
-                .addQueryParameter("format", "json")
-                .addQueryParameter("nojsoncallback", "1")
-                .addQueryParameter("extras", "url_s")
-                .addQueryParameter("safesearch", "3")
-                .build()
+            val url: HttpUrl =
+                originalRequest.url.newBuilder()
+                    .addQueryParameter("api_key", FLICKER_API_KEY)
+                    .addQueryParameter("format", "json")
+                    .addQueryParameter("nojsoncallback", "1")
+                    .addQueryParameter("extras", "url_s")
+                    .addQueryParameter("safesearch", "1")
+                    .build()
 
             Log.d(TAG, url.toString())
             val newRequest = originalRequest.newBuilder().url(url).build()

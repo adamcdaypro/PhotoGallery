@@ -1,9 +1,14 @@
 package com.example.photogallery
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -21,7 +26,14 @@ class PhotoGalleryFragment : Fragment() {
     private val binding
         get() = checkNotNull(_binding) { "View not available" }
 
+    private var searchView: SearchView? = null
+
     private val viewModel: PhotoGalleryViewModel by viewModels()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -37,8 +49,9 @@ class PhotoGalleryFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.photos.collect {
-                    binding.photoGallery.adapter = PhotoGalleryAdapter(it)
+                viewModel.uiState.collect { uiState ->
+                    binding.photoGallery.adapter = PhotoGalleryAdapter(uiState.photos)
+                    searchView?.setQuery(uiState.searchText, false)
                 }
             }
         }
@@ -47,6 +60,49 @@ class PhotoGalleryFragment : Fragment() {
     override fun onDestroy() {
         super.onDestroy()
         _binding = null
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        super.onCreateOptionsMenu(menu, inflater)
+        inflater.inflate(R.menu.fragment_photo_gallery, menu)
+
+        val searchItem = menu.findItem(R.id.menu_item_search)
+        searchView = searchItem.actionView as? SearchView
+
+        searchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                Log.d(TAG, "Search action view query $query")
+                viewModel.searchFor(query ?: "")
+                return true
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                Log.d(TAG, "Search action view text changed $newText")
+                return false
+            }
+
+        })
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.menu_item_clear -> {
+                viewModel.searchFor("")
+                true
+            }
+
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    override fun onDestroyOptionsMenu() {
+        super.onDestroyOptionsMenu()
+        searchView = null
+    }
+
+    companion object {
+
+        private const val TAG = "PhotoGalleryFragment"
     }
 
 }
