@@ -9,7 +9,7 @@ import com.example.photogallery.preferences.PreferencesRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -24,20 +24,23 @@ class PhotoGalleryViewModel : ViewModel() {
 
     init {
         viewModelScope.launch {
-            preferencesRepository.storedSearchText.collectLatest { searchText ->
-                try {
-                    val photos = getPhotosWithSearchText(searchText)
-                    Log.d(TAG, photos.toString())
-                    _uiState.update { oldState ->
-                        oldState.copy(
-                            photos = photos,
-                            searchText = searchText
-                        )
-                    }
-                } catch (exception: Exception) {
-                    Log.d(TAG, exception.localizedMessage ?: "Unknown exception")
-                }
+            try {
+                updateUiState()
+            } catch (exception: Exception) {
+                Log.d(TAG, exception.localizedMessage ?: "Unknown exception")
             }
+        }
+    }
+
+    private suspend fun updateUiState() {
+        val searchText = preferencesRepository.searchTextPreference.first()
+        val photos = getPhotosWithSearchText(searchText)
+        Log.d(TAG, photos.toString())
+        _uiState.update { oldState ->
+            oldState.copy(
+                photos = photos,
+                searchText = searchText
+            )
         }
     }
 
@@ -52,7 +55,8 @@ class PhotoGalleryViewModel : ViewModel() {
 
     fun searchFor(text: String) {
         viewModelScope.launch {
-            preferencesRepository.setSearchQueryPreferenceWith(text)
+            preferencesRepository.setSearchTextPreferenceTo(text)
+            updateUiState()
         }
     }
 

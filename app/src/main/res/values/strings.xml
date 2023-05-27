@@ -3,4 +3,8 @@
     <string name="image_from_flickr">Image from Flickr</string>
     <string name="search">Search</string>
     <string name="clear">Clear</string>
+
+    <string name="notification_channel_background_updates">Background updates</string>
+    <string name="new_photos_notification_title">New PhotoGallery Updates</string>
+    <string name="new_photos_notification_text">You have new photos in PhotoGallery.</string>
 </resources>

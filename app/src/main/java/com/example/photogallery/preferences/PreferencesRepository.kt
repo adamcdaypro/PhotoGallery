@@ -12,14 +12,22 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
-class PreferencesRepository(private val dataStore: DataStore<Preferences>) {
+class PreferencesRepository private constructor(private val dataStore: DataStore<Preferences>) {
 
-    val storedSearchText: Flow<String> = dataStore.data.map {
+    val searchTextPreference: Flow<String> = dataStore.data.map {
         it[SEARCH_TEXT_KEY] ?: ""
+    }
+
+    suspend fun setSearchTextPreferenceTo(searchText: String) {
+        dataStore.edit { it[SEARCH_TEXT_KEY] = searchText }
+    }
+
+    val lastPhotoIdPreference: Flow<String> = dataStore.data.map {
+        it[LAST_PHOTO_ID_KEY] ?: ""
     }.distinctUntilChanged()
 
-    suspend fun setSearchQueryPreferenceWith(query: String) {
-        dataStore.edit { it[SEARCH_TEXT_KEY] = query }
+    suspend fun setLastPhotoIdPreferenceTo(lastPhotoId: String) {
+        dataStore.edit { it[LAST_PHOTO_ID_KEY] = lastPhotoId }
     }
 
     companion object {
@@ -28,6 +36,7 @@ class PreferencesRepository(private val dataStore: DataStore<Preferences>) {
         private const val PREFERENCES_FILE_NAME = "preferences"
 
         private val SEARCH_TEXT_KEY = stringPreferencesKey("search_text")
+        private val LAST_PHOTO_ID_KEY = stringPreferencesKey("last_photo_id")
 
         private var INSTANCE: PreferencesRepository? = null
 
