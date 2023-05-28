@@ -18,7 +18,6 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
-import androidx.work.OneTimeWorkRequest
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import com.example.photogallery.databinding.FragmentPhotoGalleryBinding
@@ -42,15 +41,6 @@ class PhotoGalleryFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
-
-        //TODO this polling is rebuilt on rotation... BAD!
-        val constraints = Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.UNMETERED)
-            .build()
-        val workRequest = OneTimeWorkRequest.Builder(PollWorker::class.java)
-            .setConstraints(constraints)
-            .build()
-        WorkManager.getInstance(requireContext()).enqueue(workRequest)
     }
 
     override fun onCreateView(
@@ -87,21 +77,9 @@ class PhotoGalleryFragment : Fragment() {
 
         val searchItem = menu.findItem(R.id.menu_item_search)
         searchView = searchItem.actionView as? SearchView
+        onCreateSearchView()
         pollingMenuItem = menu.findItem(R.id.menu_item_toggle_polling)
-
-        searchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                Log.d(TAG, "Search action view query $query")
-                viewModel.searchFor(query ?: "")
-                return true
-            }
-
-            override fun onQueryTextChange(newText: String?): Boolean {
-                Log.d(TAG, "Search action view text changed $newText")
-                return false
-            }
-
-        })
+        onCreatePollingMenuItem()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -117,6 +95,37 @@ class PhotoGalleryFragment : Fragment() {
             }
 
             else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    override fun onDestroyOptionsMenu() {
+        super.onDestroyOptionsMenu()
+        searchView = null
+        pollingMenuItem = null
+    }
+
+    private fun onCreateSearchView() {
+        searchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                Log.d(TAG, "Search action view query $query")
+                viewModel.searchFor(query ?: "")
+                return true
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                Log.d(TAG, "Search action view text changed $newText")
+                return false
+            }
+
+        })
+    }
+
+    private fun onCreatePollingMenuItem() {
+        val isPolling = viewModel.uiState.value.isPolling
+        pollingMenuItem?.title = if (isPolling) {
+            getString(R.string.stop_polling)
+        } else {
+            getString(R.string.stop_polling)
         }
     }
 
@@ -167,12 +176,6 @@ class PhotoGalleryFragment : Fragment() {
     private fun stopPollingWorker() {
         WorkManager.getInstance(requireContext()).cancelUniqueWork(PollWorker.TAG)
         Log.d(TAG, "${PollWorker.TAG} cancelled")
-    }
-
-    override fun onDestroyOptionsMenu() {
-        super.onDestroyOptionsMenu()
-        searchView = null
-        pollingMenuItem = null
     }
 
     companion object {

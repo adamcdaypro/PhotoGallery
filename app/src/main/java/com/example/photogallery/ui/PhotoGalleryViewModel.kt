@@ -25,19 +25,20 @@ class PhotoGalleryViewModel : ViewModel() {
     init {
         viewModelScope.launch {
             try {
-                updateUiState()
+                initializeUiState()
             } catch (exception: Exception) {
                 Log.d(TAG, exception.localizedMessage ?: "Unknown exception")
             }
         }
     }
 
-    private suspend fun updateUiState() {
+    private suspend fun initializeUiState() {
         val searchText = preferencesRepository.searchTextPreference.first()
-        //TODO everytime we update UI State we are calling Flickr API... BAD!
-        val photos = getPhotosWithSearchText(searchText)
+        Log.d(TAG, "Initialize with search text $searchText")
+        val photos = initializePhotosWithSearchText(searchText)
+        Log.d(TAG, "Initialize with photos $photos")
         val isPolling = preferencesRepository.isPollingPreference.first()
-        Log.d(TAG, photos.toString())
+        Log.d(TAG, "Initialize with is polling $isPolling")
         _uiState.update { oldState ->
             oldState.copy(
                 photos = photos,
@@ -47,20 +48,30 @@ class PhotoGalleryViewModel : ViewModel() {
         }
     }
 
-    private suspend fun getPhotosWithSearchText(text: String): List<Photo> {
-        return if (text.isNotEmpty()) {
-            photoRepository.getPhotosBySearchText(text)
+    private suspend fun initializePhotosWithSearchText(searchText: String): List<Photo> {
+        return if (searchText.isNotEmpty()) {
+            photoRepository.getPhotosBySearchText(searchText)
         } else {
             photoRepository.getInterestingnessPhotos()
         }
-
     }
 
-    fun searchFor(text: String) {
+    private suspend fun getPhotosWithSearchText(searchText: String) {
+        val photos = if (searchText.isNotEmpty()) {
+            photoRepository.getPhotosBySearchText(searchText)
+        } else {
+            photoRepository.getInterestingnessPhotos()
+        }
+        Log.d(TAG, "Get new photos: $photos")
+        _uiState.update { it.copy(photos = photos) }
+    }
+
+    fun searchFor(searchText: String) {
         viewModelScope.launch {
-            preferencesRepository.setSearchTextPreferenceTo(text)
-            Log.d(TAG, "Search text preference set to $text")
-            updateUiState()
+            preferencesRepository.setSearchTextPreferenceTo(searchText)
+            Log.d(TAG, "Search text preference set to $searchText")
+            _uiState.update { it.copy(searchText = searchText) }
+            getPhotosWithSearchText(searchText)
         }
     }
 
@@ -68,7 +79,7 @@ class PhotoGalleryViewModel : ViewModel() {
         viewModelScope.launch {
             preferencesRepository.setIsPollingPreferenceTo(isPolling)
             Log.d(TAG, "Is polling preference set to $isPolling")
-            updateUiState()
+            _uiState.update { it.copy(isPolling = isPolling) }
         }
     }
 
