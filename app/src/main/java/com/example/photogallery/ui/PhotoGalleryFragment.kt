@@ -16,14 +16,17 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequest
+import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import com.example.photogallery.databinding.FragmentPhotoGalleryBinding
 import com.example.photogallery.ui.PhotoGalleryAdapter
 import com.example.photogallery.ui.PhotoGalleryViewModel
 import com.example.photogallery.worker.PollWorker
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 
 class PhotoGalleryFragment : Fragment() {
 
@@ -32,6 +35,7 @@ class PhotoGalleryFragment : Fragment() {
         get() = checkNotNull(_binding) { "View not available" }
 
     private var searchView: SearchView? = null
+    private var pollingMenuItem: MenuItem? = null
 
     private val viewModel: PhotoGalleryViewModel by viewModels()
 
@@ -39,6 +43,7 @@ class PhotoGalleryFragment : Fragment() {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
 
+        //TODO this polling is rebuilt on rotation... BAD!
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.UNMETERED)
             .build()
@@ -63,6 +68,7 @@ class PhotoGalleryFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { uiState ->
+                    Log.d(TAG, "$TAG collected UI State")
                     binding.photoGallery.adapter = PhotoGalleryAdapter(uiState.photos)
                     searchView?.setQuery(uiState.searchText, false)
                 }
@@ -81,6 +87,7 @@ class PhotoGalleryFragment : Fragment() {
 
         val searchItem = menu.findItem(R.id.menu_item_search)
         searchView = searchItem.actionView as? SearchView
+        pollingMenuItem = menu.findItem(R.id.menu_item_toggle_polling)
 
         searchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
@@ -104,13 +111,68 @@ class PhotoGalleryFragment : Fragment() {
                 true
             }
 
+            R.id.menu_item_toggle_polling -> {
+                handleTogglePolling()
+                true
+            }
+
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun handleTogglePolling(): Boolean {
+        if (pollingMenuItem == null) return false
+        val startPolling = getString(R.string.start_polling)
+        val stopPolling = getString(R.string.stop_polling)
+        when (pollingMenuItem!!.title.toString()) {
+            startPolling -> {
+                pollingMenuItem!!.title = stopPolling
+                viewModel.setIsPollingTo(true)
+                startPollingWorker()
+                Log.d(
+                    TAG,
+                    "User started polling; menu title changed from $startPolling to $stopPolling"
+                )
+            }
+
+            stopPolling -> {
+                pollingMenuItem!!.title = startPolling
+                viewModel.setIsPollingTo(false)
+                stopPollingWorker()
+                Log.d(
+                    TAG,
+                    "User stopped polling; menu title changed from $stopPolling to $startPolling"
+                )
+            }
+        }
+        return true
+    }
+
+    private fun startPollingWorker() {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.UNMETERED)
+            .build()
+        val workerRequest =
+            PeriodicWorkRequest.Builder(PollWorker::class.java, 15, TimeUnit.MINUTES)
+                .setConstraints(constraints)
+                .build()
+        WorkManager.getInstance(requireContext()).enqueueUniquePeriodicWork(
+            PollWorker.TAG,
+            ExistingPeriodicWorkPolicy.KEEP,
+            workerRequest
+        )
+        Log.d(TAG, "${PollWorker.TAG}, $workerRequest started")
+    }
+
+    private fun stopPollingWorker() {
+        WorkManager.getInstance(requireContext()).cancelUniqueWork(PollWorker.TAG)
+        Log.d(TAG, "${PollWorker.TAG} cancelled")
     }
 
     override fun onDestroyOptionsMenu() {
         super.onDestroyOptionsMenu()
         searchView = null
+        pollingMenuItem = null
     }
 
     companion object {

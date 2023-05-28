@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStoreFile
@@ -30,6 +31,14 @@ class PreferencesRepository private constructor(private val dataStore: DataStore
         dataStore.edit { it[LAST_PHOTO_ID_KEY] = lastPhotoId }
     }
 
+    val isPollingPreference: Flow<Boolean> = dataStore.data.map {
+        it[IS_POLLING_KEY] ?: false
+    }
+
+    suspend fun setIsPollingPreferenceTo(isPolling: Boolean) {
+        dataStore.edit { it[IS_POLLING_KEY] = isPolling }
+    }
+
     companion object {
 
         private const val TAG = "PreferencesRepository"
@@ -37,6 +46,7 @@ class PreferencesRepository private constructor(private val dataStore: DataStore
 
         private val SEARCH_TEXT_KEY = stringPreferencesKey("search_text")
         private val LAST_PHOTO_ID_KEY = stringPreferencesKey("last_photo_id")
+        private val IS_POLLING_KEY = booleanPreferencesKey("is_polling")
 
         private var INSTANCE: PreferencesRepository? = null
 

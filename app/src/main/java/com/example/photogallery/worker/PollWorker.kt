@@ -78,7 +78,8 @@ class PollWorker(private val context: Context, parameters: WorkerParameters) :
 
     companion object {
 
-        private const val TAG = "PollWorker"
+        const val TAG = "PollWorker"
+
     }
 
 }

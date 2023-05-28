@@ -34,12 +34,15 @@ class PhotoGalleryViewModel : ViewModel() {
 
     private suspend fun updateUiState() {
         val searchText = preferencesRepository.searchTextPreference.first()
+        //TODO everytime we update UI State we are calling Flickr API... BAD!
         val photos = getPhotosWithSearchText(searchText)
+        val isPolling = preferencesRepository.isPollingPreference.first()
         Log.d(TAG, photos.toString())
         _uiState.update { oldState ->
             oldState.copy(
                 photos = photos,
-                searchText = searchText
+                searchText = searchText,
+                isPolling = isPolling
             )
         }
     }
@@ -56,6 +59,15 @@ class PhotoGalleryViewModel : ViewModel() {
     fun searchFor(text: String) {
         viewModelScope.launch {
             preferencesRepository.setSearchTextPreferenceTo(text)
+            Log.d(TAG, "Search text preference set to $text")
+            updateUiState()
+        }
+    }
+
+    fun setIsPollingTo(isPolling: Boolean) {
+        viewModelScope.launch {
+            preferencesRepository.setIsPollingPreferenceTo(isPolling)
+            Log.d(TAG, "Is polling preference set to $isPolling")
             updateUiState()
         }
     }
@@ -67,7 +79,8 @@ class PhotoGalleryViewModel : ViewModel() {
 
     data class UiState(
         val photos: List<Photo> = listOf(),
-        val searchText: String = ""
+        val searchText: String = "",
+        val isPolling: Boolean = false
     )
 
 }
