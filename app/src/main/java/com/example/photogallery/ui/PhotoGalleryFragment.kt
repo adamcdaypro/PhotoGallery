@@ -1,5 +1,6 @@
 package com.example.photogallery
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -59,7 +60,9 @@ class PhotoGalleryFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { uiState ->
                     Log.d(TAG, "$TAG collected UI State")
-                    binding.photoGallery.adapter = PhotoGalleryAdapter(uiState.photos)
+                    binding.photoGallery.adapter = PhotoGalleryAdapter(uiState.photos) { photo ->
+                        startActivity(Intent(Intent.ACTION_VIEW, photo.photoPageUri))
+                    }
                     searchView?.setQuery(uiState.searchText, false)
                 }
             }

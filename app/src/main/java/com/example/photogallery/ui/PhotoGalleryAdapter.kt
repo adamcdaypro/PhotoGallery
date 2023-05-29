@@ -9,7 +9,10 @@ import com.example.photogallery.R
 import com.example.photogallery.databinding.PhotoGalleryListItemBinding
 import com.example.photogallery.model.Photo
 
-class PhotoGalleryAdapter(private val photos: List<Photo>) :
+class PhotoGalleryAdapter(
+    private val photos: List<Photo>,
+    private val onPhotoClicked: (Photo) -> Unit
+) :
     RecyclerView.Adapter<PhotoGalleryViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PhotoGalleryViewHolder {
@@ -23,7 +26,7 @@ class PhotoGalleryAdapter(private val photos: List<Photo>) :
     }
 
     override fun onBindViewHolder(holder: PhotoGalleryViewHolder, position: Int) {
-        holder.bind(photos[position])
+        holder.bind(photos[position], onPhotoClicked)
     }
 
 }
@@ -31,13 +34,14 @@ class PhotoGalleryAdapter(private val photos: List<Photo>) :
 class PhotoGalleryViewHolder(private val binding: PhotoGalleryListItemBinding) :
     ViewHolder(binding.root) {
 
-    fun bind(photo: Photo) {
+    fun bind(photo: Photo, onPhotoClicked: (Photo) -> Unit) {
         binding.photoImageView.apply {
             load(photo.urlSmall) {
                 placeholder(R.drawable.ic_launcher_foreground)
                 crossfade(true)
             }
             contentDescription = photo.title
+            setOnClickListener { onPhotoClicked(photo) }
         }
     }
 
