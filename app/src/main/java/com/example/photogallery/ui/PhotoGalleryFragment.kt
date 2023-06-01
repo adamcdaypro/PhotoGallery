@@ -1,6 +1,5 @@
 package com.example.photogallery
 
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -15,6 +14,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -32,7 +32,7 @@ class PhotoGalleryFragment : Fragment() {
 
     private var _binding: FragmentPhotoGalleryBinding? = null
     private val binding
-        get() = checkNotNull(_binding) { "View not available" }
+        get() = checkNotNull(_binding) { "Binding not inflated" }
 
     private var searchView: SearchView? = null
     private var pollingMenuItem: MenuItem? = null
@@ -61,7 +61,10 @@ class PhotoGalleryFragment : Fragment() {
                 viewModel.uiState.collect { uiState ->
                     Log.d(TAG, "$TAG collected UI State")
                     binding.photoGallery.adapter = PhotoGalleryAdapter(uiState.photos) { photo ->
-                        startActivity(Intent(Intent.ACTION_VIEW, photo.photoPageUri))
+//                        startActivity(Intent(Intent.ACTION_VIEW, photo.photoPageUri))
+                        findNavController().navigate(
+                            PhotoGalleryFragmentDirections.showPhoto(photo.photoPageUri)
+                        )
                     }
                     searchView?.setQuery(uiState.searchText, false)
                 }
